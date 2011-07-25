@@ -11,6 +11,32 @@
  
 #include "json.h"
 
+static QString sanitizeString(QString str)
+{
+	str.replace(QLatin1String("\\"), QLatin1String("\\\\"));
+	str.replace(QLatin1String("\""), QLatin1String("\\\""));
+	str.replace(QLatin1String("\b"), QLatin1String("\\b"));
+	str.replace(QLatin1String("\f"), QLatin1String("\\f"));
+	str.replace(QLatin1String("\n"), QLatin1String("\\n"));
+	str.replace(QLatin1String("\r"), QLatin1String("\\r"));
+	str.replace(QLatin1String("\t"), QLatin1String("\\t"));
+	return QString(QLatin1String("\"%1\"")).arg(str);
+}
+
+static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep)
+{
+	QByteArray res;
+	foreach(const QByteArray &i, list)
+	{
+		if(!res.isEmpty())
+		{
+			res += sep;
+		}
+		res += i;
+	}
+	return res;
+}
+
 /**
  * parse
  */
@@ -44,6 +70,101 @@ QVariant Json::parse(const QString &json, bool &success)
 	{
 		//Return the empty QVariant
 		return QVariant();
+	}
+}
+
+QByteArray Json::serialize(const QVariant &data)
+{
+	bool success = true;
+	return Json::serialize(data, success);
+}
+
+QByteArray Json::serialize(const QVariant &data, bool &success)
+{
+	QByteArray str;
+	success = true;
+
+	if(!data.isValid()) // invalid or null?
+	{
+		str = "null";
+	}
+	else if(data.type() == QVariant::List) // variant is a list?
+	{
+		QList<QByteArray> values;
+		const QVariantList list = data.toList();
+		foreach(const QVariant& v, list)
+		{
+			QByteArray serializedValue = serialize(v);
+			if(serializedValue.isNull())
+			{
+				success = false;
+				break;
+			}
+			values << serializedValue;
+		}
+
+		str = "[ " + join( values, ", " ) + " ]";
+	}
+	else if(data.type() == QVariant::Map) // variant is a map?
+	{
+		const QVariantMap vmap = data.toMap();
+		QMapIterator<QString, QVariant> it( vmap );
+		str = "{ ";
+		QList<QByteArray> pairs;
+		while(it.hasNext())
+		{
+			it.next();
+			QByteArray serializedValue = serialize(it.value());
+			if(serializedValue.isNull())
+			{
+				success = false;
+				break;
+			}
+			pairs << sanitizeString(it.key()).toUtf8() + " : " + serializedValue;
+		}
+		str += join(pairs, ", ");
+		str += " }";
+	}
+	else if((data.type() == QVariant::String) || (data.type() == QVariant::ByteArray)) // a string or a byte array?
+	{
+		str = sanitizeString(data.toString()).toUtf8();
+	}
+	else if(data.type() == QVariant::Double) // double?
+	{
+		str = QByteArray::number(data.toDouble());
+		if(!str.contains(".") && ! str.contains("e"))
+		{
+			str += ".0";
+		}
+	}
+	else if (data.type() == QVariant::Bool) // boolean value?
+	{
+		str = data.toBool() ? "true" : "false";
+	}
+	else if (data.type() == QVariant::ULongLong) // large unsigned number?
+	{
+		str = QByteArray::number(data.value<qulonglong>());
+	}
+	else if ( data.canConvert<qlonglong>() ) // any signed number?
+	{
+		str = QByteArray::number(data.value<qlonglong>());
+	}
+	else if (data.canConvert<QString>()) // can value be converted to string?
+	{
+		// this will catch QDate, QDateTime, QUrl, ...
+		str = sanitizeString(data.toString()).toUtf8();
+	}
+	else
+	{
+		success = false;
+	}
+	if (success)
+	{
+		return str;
+	}
+	else
+	{
+		return QByteArray();
 	}
 }
 
