@@ -2,7 +2,8 @@
 1. INTRODUCTION
 
 The Json class is a simple class for parsing JSON data into a hierarchy
-of QMaps, QLists, and QVariants.
+of QMaps, QLists, and QVariants. Now, we can write JSON data from Qt
+objects such as QString, QMap, QList and others.
 
 
 ########################################################################
@@ -70,8 +71,24 @@ length: 3
 use_space: true
 ------------------------------------------------------------------------
 
-Parsing JSON data with Json class is as simple as that! Enjoy!
+To write JSON data from Qt object is as simple as parsing:
 
+------------------------------------------------------------------------
+QVariantMap map;
+map["name"] = "Name";
+map["age"] = 22;
+
+QByteArray data = Json::serialize(map);
+------------------------------------------------------------------------
+
+The byte array 'data' contains valid JSON data:
+
+------------------------------------------------------------------------
+{
+        name: "Luis Gustavo",
+        age: 22,
+}
+------------------------------------------------------------------------
 
 ########################################################################
 3. LICENSE
