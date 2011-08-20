@@ -430,7 +430,7 @@ QVariant Json::parseNumber(const QString &json, int &index)
 	
 	index = lastIndex + 1;
 
-	return QVariant(numberStr);
+	return QVariant(numberStr.toDouble(NULL));
 }
 
 /**
