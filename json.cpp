@@ -83,7 +83,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
 	{
 		str = "null";
 	}
-	else if(data.type() == QVariant::List) // variant is a list?
+	else if((data.type() == QVariant::List) || (data.type() == QVariant::StringList)) // variant is a list?
 	{
 		QList<QByteArray> values;
 		const QVariantList list = data.toList();
