@@ -1,5 +1,5 @@
 /**
- * \file json.h
+ * \file json.cpp
  */
 
 #include <QDebug>
