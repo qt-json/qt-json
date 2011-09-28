@@ -4,6 +4,9 @@
  
 #include "json.h"
 
+namespace QtJson{
+
+
 static QString sanitizeString(QString str)
 {
 	str.replace(QLatin1String("\\"), QLatin1String("\\\\"));
@@ -540,3 +543,6 @@ int Json::nextToken(const QString &json, int &index)
 
 	return JsonTokenNone;
 }
+
+
+} //end namespace
