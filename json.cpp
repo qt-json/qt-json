@@ -31,6 +31,7 @@
  */
 
 #include "json.h"
+#include <iostream>
 
 namespace QtJson
 {
@@ -122,6 +123,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
                         QByteArray serializedValue = serialize(v);
                         if(serializedValue.isNull())
                         {
+                                std::cerr << "Problem with list" << std::endl;
                                 success = false;
                                 break;
                         }
@@ -142,6 +144,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
                         QByteArray serializedValue = serialize(it.value());
                         if(serializedValue.isNull())
                         {
+                                std::cerr << "Problem with map" << std::endl;
                                 success = false;
                                 break;
                         }
@@ -174,6 +177,10 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         {
                 str = QByteArray::number(data.value<qlonglong>());
         }
+        else if (data.canConvert<long>())
+        {
+                str = sanitizeString(QString::number(data.value<long>())).toUtf8();
+        }
         else if (data.canConvert<QString>()) // can value be converted to string?
         {
                 // this will catch QDate, QDateTime, QUrl, ...
@@ -181,6 +188,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         }
         else
         {
+                std::cerr << "Couldn't convert to a data type!" << std::endl;
                 success = false;
         }
         if (success)
