@@ -8,6 +8,8 @@
 #include <QVariant>
 #include <QString>
 
+namespace QtJson{
+
 /**
  * \enum JsonToken
  */
@@ -166,5 +168,8 @@ class Json
 		 */
 		static int nextToken(const QString &json, int &index);
 };
+
+
+} //end namespace
 
 #endif //JSON_H
