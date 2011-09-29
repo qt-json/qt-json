@@ -123,7 +123,6 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
                         QByteArray serializedValue = serialize(v);
                         if(serializedValue.isNull())
                         {
-                                std::cerr << "Problem with list" << std::endl;
                                 success = false;
                                 break;
                         }
@@ -144,7 +143,6 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
                         QByteArray serializedValue = serialize(it.value());
                         if(serializedValue.isNull())
                         {
-                                std::cerr << "Problem with map" << std::endl;
                                 success = false;
                                 break;
                         }
@@ -188,7 +186,6 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         }
         else
         {
-                std::cerr << "Couldn't convert to a data type!" << std::endl;
                 success = false;
         }
         if (success)
