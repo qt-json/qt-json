@@ -1,16 +1,16 @@
 ########################################################################
 1. INTRODUCTION
 
-The Json class is a simple class for parsing JSON data into a hierarchy
-of QMaps, QLists, and QVariants. Now, we can write JSON data from Qt
-objects such as QString, QMap, QList and others.
+The Json class is a simple class for parsing JSON data into a QVariant 
+hierarchies. Now, we can also reverse the process and serialize
+QVariant hierarchies into valid JSON data.
 
 
 ########################################################################
 2. HOW TO USE
 
-The parse is really easy to use. Let's say we have the following JSON
-data:
+The parser is really easy to use. Let's say we have the following 
+QString of JSON data:
 
 ------------------------------------------------------------------------
 {
@@ -27,7 +27,6 @@ data:
 }
 ------------------------------------------------------------------------
 
-
 We would first call the parse-method:
 
 ------------------------------------------------------------------------
@@ -42,7 +41,6 @@ if(!ok) {
     exit(1);
 }
 ------------------------------------------------------------------------
-
 
 Assuming the parsing process completed without errors, we would then
 go through the hierarchy:
@@ -59,7 +57,6 @@ QVariantMap nestedMap = result["indent"].toMap();
 qDebug() << "length:" << nestedMap["length"].toInt();
 qDebug() << "use_space:" << nestedMap["use_space"].toBool();
 ------------------------------------------------------------------------
-
 
 The previous code would print out the following:
 
@@ -91,6 +88,7 @@ The byte array 'data' contains valid JSON data:
         age: 22,
 }
 ------------------------------------------------------------------------
+
 
 ########################################################################
 4. CONTRIBUTING
