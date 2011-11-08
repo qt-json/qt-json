@@ -52,7 +52,7 @@ static QString sanitizeString(QString str)
 static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep)
 {
         QByteArray res;
-        foreach(const QByteArray &i, list)
+        Q_FOREACH(const QByteArray &i, list)
         {
                 if(!res.isEmpty())
                 {
@@ -118,7 +118,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         {
                 QList<QByteArray> values;
                 const QVariantList list = data.toList();
-                foreach(const QVariant& v, list)
+                Q_FOREACH(const QVariant& v, list)
                 {
                         QByteArray serializedValue = serialize(v);
                         if(serializedValue.isNull())
