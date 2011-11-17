@@ -465,7 +465,13 @@ QVariant Json::parseNumber(const QString &json, int &index)
 
         index = lastIndex + 1;
 
-        return QVariant(numberStr.toDouble(NULL));
+        if (numberStr.contains('.')) {
+                return QVariant(numberStr.toDouble(NULL));
+        } else if (numberStr.startsWith('-')) {
+                return QVariant(numberStr.toLongLong(NULL));
+        } else {
+                return QVariant(numberStr.toULongLong(NULL));
+        }
 }
 
 /**
