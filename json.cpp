@@ -177,7 +177,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         }
         else if (data.canConvert<long>())
         {
-                str = sanitizeString(QString::number(data.value<long>())).toUtf8();
+                str = QString::number(data.value<long>()).toUtf8();
         }
         else if (data.canConvert<QString>()) // can value be converted to string?
         {
