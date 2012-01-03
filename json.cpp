@@ -157,7 +157,7 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         }
         else if(data.type() == QVariant::Double) // double?
         {
-                str = QByteArray::number(data.toDouble());
+                str = QByteArray::number(data.toDouble(), 'g', 20);
                 if(!str.contains(".") && ! str.contains("e"))
                 {
                         str += ".0";
