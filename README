@@ -31,7 +31,7 @@ We would first call the parse-method:
 
 ------------------------------------------------------------------------
 //Say that we're using the QtJson namespace
-using namepsace QtJson;
+using namespace QtJson;
 bool ok;
 //json is a QString containing the JSON data
 QVariantMap result = Json::parse(json, ok).toMap();
