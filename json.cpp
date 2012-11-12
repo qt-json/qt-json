@@ -36,45 +36,37 @@ namespace QtJson
 {
 
 
-static QString sanitizeString(QString str)
-{
-        str.replace(QLatin1String("\\"), QLatin1String("\\\\"));
-        str.replace(QLatin1String("\""), QLatin1String("\\\""));
-        str.replace(QLatin1String("\b"), QLatin1String("\\b"));
-        str.replace(QLatin1String("\f"), QLatin1String("\\f"));
-        str.replace(QLatin1String("\n"), QLatin1String("\\n"));
-        str.replace(QLatin1String("\r"), QLatin1String("\\r"));
-        str.replace(QLatin1String("\t"), QLatin1String("\\t"));
-        return QString(QLatin1String("\"%1\"")).arg(str);
-}
+static QString sanitizeString(QString str);
+static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep);
+static QVariant parseValue(const QString &json, int &index, bool &success);
+static QVariant parseObject(const QString &json, int &index, bool &success);
+static QVariant parseArray(const QString &json, int &index, bool &success);
+static QVariant parseString(const QString &json, int &index, bool &success);
+static QVariant parseNumber(const QString &json, int &index);
+static int lastIndexOfNumber(const QString &json, int index);
+static void eatWhitespace(const QString &json, int &index);
+static int lookAhead(const QString &json, int index);
+static int nextToken(const QString &json, int &index);
 
-static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep)
-{
-        QByteArray res;
-        Q_FOREACH(const QByteArray &i, list)
-        {
-                if(!res.isEmpty())
-                {
-                        res += sep;
-                }
-                res += i;
-        }
-        return res;
-}
+
+
+
+/***** public *****/
+
 
 /**
  * parse
  */
-QVariant Json::parse(const QString &json)
+QVariant parse(const QString &json)
 {
         bool success = true;
-        return Json::parse(json, success);
+        return parse(json, success);
 }
 
 /**
  * parse
  */
-QVariant Json::parse(const QString &json, bool &success)
+QVariant parse(const QString &json, bool &success)
 {
         success = true;
 
@@ -86,7 +78,7 @@ QVariant Json::parse(const QString &json, bool &success)
                 int index = 0;
 
                 //Parse the first value
-                QVariant value = Json::parseValue(data, index, success);
+                QVariant value = parseValue(data, index, success);
 
                 //Return the parsed value
                 return value;
@@ -98,13 +90,13 @@ QVariant Json::parse(const QString &json, bool &success)
         }
 }
 
-QByteArray Json::serialize(const QVariant &data)
+QByteArray serialize(const QVariant &data)
 {
         bool success = true;
-        return Json::serialize(data, success);
+        return serialize(data, success);
 }
 
-QByteArray Json::serialize(const QVariant &data, bool &success)
+QByteArray serialize(const QVariant &data, bool &success)
 {
         QByteArray str;
         success = true;
@@ -221,31 +213,81 @@ QByteArray Json::serialize(const QVariant &data, bool &success)
         }
 }
 
+
+
+/***** private *****/
+
+
+/**
+ * \enum JsonToken
+ */
+enum JsonToken
+{
+        JsonTokenNone = 0,
+        JsonTokenCurlyOpen = 1,
+        JsonTokenCurlyClose = 2,
+        JsonTokenSquaredOpen = 3,
+        JsonTokenSquaredClose = 4,
+        JsonTokenColon = 5,
+        JsonTokenComma = 6,
+        JsonTokenString = 7,
+        JsonTokenNumber = 8,
+        JsonTokenTrue = 9,
+        JsonTokenFalse = 10,
+        JsonTokenNull = 11
+};
+
+static QString sanitizeString(QString str)
+{
+        str.replace(QLatin1String("\\"), QLatin1String("\\\\"));
+        str.replace(QLatin1String("\""), QLatin1String("\\\""));
+        str.replace(QLatin1String("\b"), QLatin1String("\\b"));
+        str.replace(QLatin1String("\f"), QLatin1String("\\f"));
+        str.replace(QLatin1String("\n"), QLatin1String("\\n"));
+        str.replace(QLatin1String("\r"), QLatin1String("\\r"));
+        str.replace(QLatin1String("\t"), QLatin1String("\\t"));
+        return QString(QLatin1String("\"%1\"")).arg(str);
+}
+
+static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep)
+{
+        QByteArray res;
+        Q_FOREACH(const QByteArray &i, list)
+        {
+                if(!res.isEmpty())
+                {
+                        res += sep;
+                }
+                res += i;
+        }
+        return res;
+}
+
 /**
  * parseValue
  */
-QVariant Json::parseValue(const QString &json, int &index, bool &success)
+static QVariant parseValue(const QString &json, int &index, bool &success)
 {
         //Determine what kind of data we should parse by
         //checking out the upcoming token
-        switch(Json::lookAhead(json, index))
+        switch(lookAhead(json, index))
         {
                 case JsonTokenString:
-                        return Json::parseString(json, index, success);
+                        return parseString(json, index, success);
                 case JsonTokenNumber:
-                        return Json::parseNumber(json, index);
+                        return parseNumber(json, index);
                 case JsonTokenCurlyOpen:
-                        return Json::parseObject(json, index, success);
+                        return parseObject(json, index, success);
                 case JsonTokenSquaredOpen:
-                        return Json::parseArray(json, index, success);
+                        return parseArray(json, index, success);
                 case JsonTokenTrue:
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                         return QVariant(true);
                 case JsonTokenFalse:
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                         return QVariant(false);
                 case JsonTokenNull:
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                         return QVariant();
                 case JsonTokenNone:
                         break;
@@ -259,20 +301,20 @@ QVariant Json::parseValue(const QString &json, int &index, bool &success)
 /**
  * parseObject
  */
-QVariant Json::parseObject(const QString &json, int &index, bool &success)
+static QVariant parseObject(const QString &json, int &index, bool &success)
 {
         QVariantMap map;
         int token;
 
         //Get rid of the whitespace and increment index
-        Json::nextToken(json, index);
+        nextToken(json, index);
 
         //Loop through all of the key/value pairs of the object
         bool done = false;
         while(!done)
         {
                 //Get the upcoming token
-                token = Json::lookAhead(json, index);
+                token = lookAhead(json, index);
 
                 if(token == JsonTokenNone)
                 {
@@ -281,17 +323,17 @@ QVariant Json::parseObject(const QString &json, int &index, bool &success)
                 }
                 else if(token == JsonTokenComma)
                 {
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                 }
                 else if(token == JsonTokenCurlyClose)
                 {
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                         return map;
                 }
                 else
                 {
                         //Parse the key/value pair's name
-                        QString name = Json::parseString(json, index, success).toString();
+                        QString name = parseString(json, index, success).toString();
 
                         if(!success)
                         {
@@ -299,7 +341,7 @@ QVariant Json::parseObject(const QString &json, int &index, bool &success)
                         }
 
                         //Get the next token
-                        token = Json::nextToken(json, index);
+                        token = nextToken(json, index);
 
                         //If the next token is not a colon, flag the failure
                         //return an empty QVariant
@@ -310,7 +352,7 @@ QVariant Json::parseObject(const QString &json, int &index, bool &success)
                         }
 
                         //Parse the key/value pair's value
-                        QVariant value = Json::parseValue(json, index, success);
+                        QVariant value = parseValue(json, index, success);
 
                         if(!success)
                         {
@@ -329,16 +371,16 @@ QVariant Json::parseObject(const QString &json, int &index, bool &success)
 /**
  * parseArray
  */
-QVariant Json::parseArray(const QString &json, int &index, bool &success)
+static QVariant parseArray(const QString &json, int &index, bool &success)
 {
         QVariantList list;
 
-        Json::nextToken(json, index);
+        nextToken(json, index);
 
         bool done = false;
         while(!done)
         {
-                int token = Json::lookAhead(json, index);
+                int token = lookAhead(json, index);
 
                 if(token == JsonTokenNone)
                 {
@@ -347,16 +389,16 @@ QVariant Json::parseArray(const QString &json, int &index, bool &success)
                 }
                 else if(token == JsonTokenComma)
                 {
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                 }
                 else if(token == JsonTokenSquaredClose)
                 {
-                        Json::nextToken(json, index);
+                        nextToken(json, index);
                         break;
                 }
                 else
                 {
-                        QVariant value = Json::parseValue(json, index, success);
+                        QVariant value = parseValue(json, index, success);
 
                         if(!success)
                         {
@@ -373,12 +415,12 @@ QVariant Json::parseArray(const QString &json, int &index, bool &success)
 /**
  * parseString
  */
-QVariant Json::parseString(const QString &json, int &index, bool &success)
+static QVariant parseString(const QString &json, int &index, bool &success)
 {
         QString s;
         QChar c;
 
-        Json::eatWhitespace(json, index);
+        eatWhitespace(json, index);
 
         c = json[index++];
 
@@ -476,11 +518,11 @@ QVariant Json::parseString(const QString &json, int &index, bool &success)
 /**
  * parseNumber
  */
-QVariant Json::parseNumber(const QString &json, int &index)
+static QVariant parseNumber(const QString &json, int &index)
 {
-        Json::eatWhitespace(json, index);
+        eatWhitespace(json, index);
 
-        int lastIndex = Json::lastIndexOfNumber(json, index);
+        int lastIndex = lastIndexOfNumber(json, index);
         int charLength = (lastIndex - index) + 1;
         QString numberStr;
 
@@ -500,7 +542,7 @@ QVariant Json::parseNumber(const QString &json, int &index)
 /**
  * lastIndexOfNumber
  */
-int Json::lastIndexOfNumber(const QString &json, int index)
+static int lastIndexOfNumber(const QString &json, int index)
 {
         int lastIndex;
 
@@ -518,7 +560,7 @@ int Json::lastIndexOfNumber(const QString &json, int index)
 /**
  * eatWhitespace
  */
-void Json::eatWhitespace(const QString &json, int &index)
+static void eatWhitespace(const QString &json, int &index)
 {
         for(; index < json.size(); index++)
         {
@@ -532,18 +574,18 @@ void Json::eatWhitespace(const QString &json, int &index)
 /**
  * lookAhead
  */
-int Json::lookAhead(const QString &json, int index)
+static int lookAhead(const QString &json, int index)
 {
         int saveIndex = index;
-        return Json::nextToken(json, saveIndex);
+        return nextToken(json, saveIndex);
 }
 
 /**
  * nextToken
  */
-int Json::nextToken(const QString &json, int &index)
+static int nextToken(const QString &json, int &index)
 {
-        Json::eatWhitespace(json, index);
+        eatWhitespace(json, index);
 
         if(index == json.size())
         {
