@@ -31,7 +31,6 @@
  */
 
 #include "json.h"
-#include <iostream>
 
 namespace QtJson
 {
