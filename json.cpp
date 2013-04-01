@@ -48,8 +48,27 @@ static void eatWhitespace(const QString &json, int &index);
 static int lookAhead(const QString &json, int index);
 static int nextToken(const QString &json, int &index);
 
+template<typename T>
+QByteArray serializeMap(const T &map, bool &success)
+{
+      QByteArray str = "{ ";
+      QList<QByteArray> pairs;
+      for (typename T::const_iterator it = map.begin(), itend = map.end(); it != itend; ++it) {
+        QByteArray serializedValue = serialize(it.value());
 
+        if(serializedValue.isNull())
+        {
+          success = false;
+          break;
+        }
 
+        pairs << sanitizeString(it.key()).toUtf8() + " : " + serializedValue;
+      }
+
+      str += join(pairs, ", ");
+      str += " }";
+      return str;
+}
 
 /***** public *****/
 
@@ -124,47 +143,11 @@ QByteArray serialize(const QVariant &data, bool &success)
         }
 		else if(data.type() == QVariant::Hash) // variant is a hash?
 		{
-			const QVariantHash vhash = data.toHash();
-			QHashIterator<QString, QVariant> it( vhash );
-			str = "{ ";
-			QList<QByteArray> pairs;
-
-			while(it.hasNext())
-			{
-				it.next();
-				QByteArray serializedValue = serialize(it.value());
-
-				if(serializedValue.isNull())
-				{
-					success = false;
-					break;
-				}
-
-				pairs << sanitizeString(it.key()).toUtf8() + " : " + serializedValue;
-			}
-
-			str += join(pairs, ", ");
-			str += " }";
+            str = serializeMap<>(data.toHash(), success);
 		}
         else if(data.type() == QVariant::Map) // variant is a map?
         {
-                const QVariantMap vmap = data.toMap();
-                QMapIterator<QString, QVariant> it( vmap );
-                str = "{ ";
-                QList<QByteArray> pairs;
-                while(it.hasNext())
-                {
-                        it.next();
-                        QByteArray serializedValue = serialize(it.value());
-                        if(serializedValue.isNull())
-                        {
-                                success = false;
-                                break;
-                        }
-                        pairs << sanitizeString(it.key()).toUtf8() + " : " + serializedValue;
-                }
-                str += join(pairs, ", ");
-                str += " }";
+            str = serializeMap<>(data.toMap(), success);
         }
         else if((data.type() == QVariant::String) || (data.type() == QVariant::ByteArray)) // a string or a byte array?
         {
