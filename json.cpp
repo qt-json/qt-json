@@ -155,10 +155,15 @@ QByteArray serialize(const QVariant &data, bool &success)
         }
         else if(data.type() == QVariant::Double) // double?
         {
-                str = QByteArray::number(data.toDouble(), 'g', 20);
-                if(!str.contains(".") && ! str.contains("e"))
-                {
-                        str += ".0";
+                double value = data.toDouble();
+                if ((value - value) == 0.0) {
+                        str = QByteArray::number(value, 'g', 20);
+                        if(!str.contains(".") && ! str.contains("e"))
+                        {
+                                str += ".0";
+                        }
+                } else {
+                    success = false;
                 }
         }
         else if (data.type() == QVariant::Bool) // boolean value?
