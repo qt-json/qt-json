@@ -178,7 +178,7 @@ QByteArray serialize(const QVariant &data, bool &success)
         {
                 str = QByteArray::number(data.value<qlonglong>());
         }
-        else if (data.canConvert<long>())
+        else if (data.canConvert<long>()) //TODO: this code is never executed
         {
                 str = QString::number(data.value<long>()).toUtf8();
         }
@@ -201,7 +201,15 @@ QByteArray serialize(const QVariant &data, bool &success)
         }
 }
 
+QString serializeStr(const QVariant &data)
+{
+    return QString::fromUtf8(serialize(data));
+}
 
+QString serializeStr(const QVariant &data, bool &success)
+{
+    return QString::fromUtf8(serialize(data, success));
+}
 
 /***** private *****/
 
@@ -517,13 +525,26 @@ static QVariant parseNumber(const QString &json, int &index)
         numberStr = json.mid(index, charLength);
 
         index = lastIndex + 1;
+        bool ok;
 
         if (numberStr.contains('.')) {
                 return QVariant(numberStr.toDouble(NULL));
         } else if (numberStr.startsWith('-')) {
-                return QVariant(numberStr.toLongLong(NULL));
+                int i = numberStr.toInt(&ok);
+                if(!ok)
+                {
+                    qlonglong ll = numberStr.toLongLong(&ok);
+                    return ok ? ll : QVariant(numberStr);
+                }
+                return i;
         } else {
-                return QVariant(numberStr.toULongLong(NULL));
+                uint u = numberStr.toUInt(&ok);
+                if(!ok)
+                {
+                    qulonglong ull = numberStr.toULongLong(&ok);
+                    return ok ? ull : QVariant(numberStr);
+                }
+                return u;
         }
 }
 
