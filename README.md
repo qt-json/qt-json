@@ -65,7 +65,7 @@ The previous code would print out the following:
 ---
 
 #### Serializing JSON ####
-To write JSON data from Qt object is as simple as creating and assigning data to a [QVariantMap][varmap]:
+To write JSON data from Qt object is as simple as creating and assigning data to a [QVariantMap/JsonObject][varmap]:
 
 ```cpp
 QtJson::JsonObject contributor;
@@ -84,7 +84,7 @@ The byte array 'data' contains valid JSON data:
 }
 ```
 
-After creating the QVariantMap, you can create a [QVariantList][varlist] and append the QVariantMaps. 
+After creating the QVariantMap, you can create a [QVariantList/JsonArray][varlist] and append the QVariantMaps. 
 
 ```cpp    
 QtJson::JsonObject friend1, friend2, friend3;
@@ -108,7 +108,7 @@ obj["friends"] = friends;
 
 This way you create a nested structure:
 
-```js
+```json
 {
     "friends": [
         {
