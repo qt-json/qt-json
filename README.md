@@ -24,7 +24,7 @@ QString of JSON data:
 }
 ```
 
-We would first call the parse-method:
+We would first call the parse-function:
 
 ```cpp
 //Say that we're using the QtJson namespace
@@ -47,9 +47,9 @@ foreach(QVariant plugin, result["plug-ins"].toList()) {
     qDebug() << "  -" << plugin.toString();
 }
 
-QVariantMap nestedMap = result["indent"].toMap();
-qDebug() << "length:" << nestedMap["length"].toInt();
-qDebug() << "use_space:" << nestedMap["use_space"].toBool();
+QtJson::JsonObject nested = result["indent"].toMap();
+qDebug() << "length:" << nested["length"].toInt();
+qDebug() << "use_space:" << nested["use_space"].toBool();
 ```
 
 The previous code would print out the following:
@@ -69,7 +69,7 @@ To write JSON data from Qt object is as simple as creating and assigning data to
 
 ```cpp
 QtJson::JsonObject contributor;
-contributor["name"] = "Name";
+contributor["name"] = "Luis Gustavo";
 contributor["age"] = 22;
 
 QByteArray data = Json::serialize(contributor);
@@ -134,7 +134,7 @@ If you continue this process recursively, you nest more levels into the JSON str
 ### 3. CONTRIBUTING ###
 
 Send in a pull request and bug the maintainer until it gets merged and published. 
-Make sure to add yourself to CONTRIBUTORS.
+Make sure to add yourself to AUTHORS.
 
 
 [js]: http://www.json.org/ "JSON Standard specification"
