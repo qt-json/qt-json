@@ -27,9 +27,10 @@ QString of JSON data:
 We would first call the parse-function:
 
 ```cpp
-//Say that we're using the QtJson namespace
+#include "json.h"
+
 bool ok;
-//json is a QString containing the JSON data
+// json is a QString containing the JSON data
 QtJson::JsonObject result = QtJson::parse(json, ok).toMap();
 
 if(!ok) {
@@ -62,7 +63,6 @@ The previous code would print out the following:
     length: 3
     use_space: true
 
----
 
 #### Serializing JSON ####
 To write JSON data from Qt object is as simple as creating and assigning data to a [QVariantMap/JsonObject][varmap]:
@@ -128,8 +128,6 @@ This way you create a nested structure:
 ```
 
 If you continue this process recursively, you nest more levels into the JSON structure.
-
----
 
 ### 3. CONTRIBUTING ###
 
