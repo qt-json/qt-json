@@ -120,7 +120,7 @@ namespace QtJson {
         } else if (data.type() == QVariant::Double) { // double?
             double value = data.toDouble();
             if ((value - value) == 0.0) {
-                str = QByteArray::number(value, 'g', 20);
+                str = QByteArray::number(value, 'g');
                 if (!str.contains(".") && ! str.contains("e")) {
                     str += ".0";
                 }
