@@ -531,23 +531,19 @@ namespace QtJson {
         return JsonTokenNone;
     }
 
-    void setDateTimeFormat(const QString &format)
-    {
+    void setDateTimeFormat(const QString &format) {
         dateTimeFormat = format;
     }
 
-    void setDateFormat(const QString &format)
-    {
+    void setDateFormat(const QString &format) {
         dateFormat = format;
     }
 
-    QString getDateTimeFormat()
-    {
+    QString getDateTimeFormat() {
         return dateTimeFormat;
     }
 
-    QString getDateFormat()
-    {
+    QString getDateFormat() {
         return dateFormat;
     }
 
