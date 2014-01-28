@@ -20,9 +20,12 @@
  * \file json.cpp
  */
 
+#include <QDateTime>
 #include "json.h"
 
 namespace QtJson {
+    static QString dateFormat, dateTimeFormat;
+
     static QString sanitizeString(QString str);
     static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep);
     static QVariant parseValue(const QString &json, int &index, bool &success);
@@ -133,10 +136,18 @@ namespace QtJson {
             str = QByteArray::number(data.value<qulonglong>());
         } else if (data.canConvert<qlonglong>()) { // any signed number?
             str = QByteArray::number(data.value<qlonglong>());
-        } else if (data.canConvert<long>()) { //TODO: this code is never executed
+        } else if (data.canConvert<long>()) { //TODO: this code is never executed because all smaller types can be converted to qlonglong
             str = QString::number(data.value<long>()).toUtf8();
+        } else if (data.type() == QVariant::DateTime) { // datetime value?
+            str = sanitizeString(dateTimeFormat.isEmpty()
+                                 ? data.toDateTime().toString()
+                                 : data.toDateTime().toString(dateTimeFormat)).toUtf8();
+        } else if (data.type() == QVariant::Date) { // date value?
+            str = sanitizeString(dateTimeFormat.isEmpty()
+                                 ? data.toDate().toString()
+                                 : data.toDate().toString(dateFormat)).toUtf8();
         } else if (data.canConvert<QString>()) { // can value be converted to string?
-            // this will catch QDate, QDateTime, QUrl, ...
+            // this will catch QUrl, ... (all other types which can be converted to string)
             str = sanitizeString(data.toString()).toUtf8();
         } else {
             success = false;
@@ -519,4 +530,21 @@ namespace QtJson {
 
         return JsonTokenNone;
     }
+
+    void setDateTimeFormat(const QString &format) {
+        dateTimeFormat = format;
+    }
+
+    void setDateFormat(const QString &format) {
+        dateFormat = format;
+    }
+
+    QString getDateTimeFormat() {
+        return dateTimeFormat;
+    }
+
+    QString getDateFormat() {
+        return dateFormat;
+    }
+
 } //end namespace
