@@ -121,14 +121,12 @@ namespace QtJson {
                    (data.type() == QVariant::ByteArray)) {// a string or a byte array?
             str = sanitizeString(data.toString()).toUtf8();
         } else if (data.type() == QVariant::Double) { // double?
-            double value = data.toDouble();
-            if ((value - value) == 0.0) {
+            double value = data.toDouble(&success);
+            if (success) {
                 str = QByteArray::number(value, 'g');
                 if (!str.contains(".") && ! str.contains("e")) {
                     str += ".0";
                 }
-            } else {
-                success = false;
             }
         } else if (data.type() == QVariant::Bool) { // boolean value?
             str = data.toBool() ? "true" : "false";
@@ -155,9 +153,8 @@ namespace QtJson {
 
         if (success) {
             return str;
-        } else {
-            return QByteArray();
         }
+        return QByteArray();
     }
 
     QString serializeStr(const QVariant &data) {
