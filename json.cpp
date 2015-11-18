@@ -56,6 +56,22 @@ namespace QtJson {
         return str;
     }
 
+    void insert(QVariant &v, const QString &key, const QVariant &value);
+    void append(QVariant &v, const QVariant &value);
+
+    template<typename T>
+    void cloneMap(QVariant &json, const T &map) {
+	for (typename T::const_iterator it = map.begin(), itend = map.end(); it != itend; ++it) {
+	    insert(json, it.key(), (*it));
+	}
+    }
+
+    template<typename T>
+    void cloneList(QVariant &json, const T &list) {
+	for (typename T::const_iterator it = list.begin(), itend = list.end(); it != itend; ++it) {
+	    append(json, (*it));
+	}
+    }
 
     /**
      * parse
@@ -86,6 +102,45 @@ namespace QtJson {
             // Return the empty QVariant
             return QVariant();
         }
+    }
+
+    /**
+     * clone
+     */
+    QVariant clone(const QVariant &data) {
+	QVariant v;
+
+	if (data.type() == QVariant::Map) {
+	    cloneMap(v, data.toMap());
+	} else if (data.type() == QVariant::Hash) {
+	    cloneMap(v, data.toHash());
+	} else if (data.type() == QVariant::List) {
+	    cloneList(v, data.toList());
+	} else if (data.type() == QVariant::StringList) {
+	    cloneList(v, data.toStringList());
+	} else {
+	    v = QVariant(data);
+	}
+
+	return v;
+    }
+
+    /**
+     * insert value (map case)
+     */
+    void insert(QVariant &v, const QString &key, const QVariant &value) {
+	if (!v.canConvert<QVariantMap>()) v = QVariantMap();
+	QVariantMap *p = (QVariantMap *)v.data();
+	p->insert(key, clone(value));
+    }
+
+    /**
+     * append value (list case)
+     */
+    void append(QVariant &v, const QVariant &value) {
+	if (!v.canConvert<QVariantList>()) v = QVariantList();
+	QVariantList *p = (QVariantList *)v.data();
+	p->append(value);
     }
 
     QByteArray serialize(const QVariant &data) {
