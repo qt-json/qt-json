@@ -38,6 +38,30 @@ namespace QtJson {
     typedef QVariantList JsonArray;
 
     /**
+     * Clone a JSON object (makes a deep copy)
+     *
+     * \param data The JSON object
+     */
+    QVariant clone(const QVariant &data);
+
+    /**
+     * Insert value to JSON object (QVariantMap)
+     *
+     * \param v The JSON object
+     * \param key The key
+     * \param value The value
+     */
+    void insert(QVariant &v, const QString &key, const QVariant &value);
+
+    /**
+     * Append value to JSON array (QVariantList)
+     *
+     * \param v The JSON array
+     * \param value The value
+     */
+    void append(QVariant &v, const QVariant &value);
+
+    /**
      * Parse a JSON string
      *
      * \param json The JSON data

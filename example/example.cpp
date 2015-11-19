@@ -35,6 +35,25 @@ void printJson(const JsonObject &result) {
     qDebug() << QtJson::serialize(result);
 }
 
+void testClone()
+{
+    bool ok;
+
+    // use an example form http://json.org/example.html
+    QString json = readFile("complex.json");
+    if (json.isEmpty())
+        qFatal("Could not read JSON file!");
+
+    JsonObject a = QtJson::parse(json, ok).toMap();
+    printJson(a);
+
+    JsonObject b = QtJson::clone(a).toMap();
+    printJson(b);
+
+    if (QtJson::serializeStr(a) != QtJson::serializeStr(b))
+        qFatal("An error occured while cloning");
+}
+
 int main(int argc, char **argv) {
     QString json = readFile("example.json");
     if (json.isEmpty()) {
@@ -59,6 +78,8 @@ int main(int argc, char **argv) {
     result["extra"] = extra;
 
     printJson(result);
+
+    testClone();
 
     return 0;
 }
