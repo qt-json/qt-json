@@ -54,6 +54,29 @@ void testClone()
         qFatal("An error occured while cloning");
 }
 
+void testObj()
+{
+    QtJson::Object json;
+
+    // compile-only test, needs to be improved
+
+    json["int"] = 0;
+
+    json["str"]["a"] = QString("StringA");
+    json["str"]["b"] = QString("StringB");
+    json["str"]["c"] = QString("StringC");
+
+    json["obj"]["QVariant"] = QVariant();
+    json["obj"]["QVariantMap"] = QVariantMap();
+    json["obj"]["QVariantHash"] = QVariantHash();
+
+    qDebug() << "QtJson::Object [1]" << QtJson::serialize(json);
+
+    json.remove("obj");
+
+    qDebug() << "QtJson::Object [2]" << QtJson::serialize(json);
+}
+
 int main(int argc, char **argv) {
     QString json = readFile("example.json");
     if (json.isEmpty()) {
@@ -80,6 +103,7 @@ int main(int argc, char **argv) {
     printJson(result);
 
     testClone();
+    testObj();
 
     return 0;
 }
