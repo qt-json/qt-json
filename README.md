@@ -72,7 +72,7 @@ QtJson::JsonObject contributor;
 contributor["name"] = "Luis Gustavo";
 contributor["age"] = 22;
 
-QByteArray data = Json::serialize(contributor);
+QByteArray data = QtJson::serialize(contributor);
 ```
 
 The byte array 'data' contains valid JSON data:
