@@ -150,7 +150,10 @@ namespace QtJson {
         Object(const Object& ref) : QVariant(ref) {}
 
         Object& operator=(const QVariant& rhs) {
-            setValue(rhs);
+            /** It maybe more robust when running under Qt versions below 4.7 */
+            QObject * obj = qvariant_cast<QObject *>(rhs);
+            //  setValue(rhs);
+            setValue(obj);
             return *this;
         }
         Object& operator[](const QString& key) {
