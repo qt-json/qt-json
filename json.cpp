@@ -26,6 +26,7 @@
 
 namespace QtJson {
     static QString dateFormat, dateTimeFormat;
+    static bool prettySerialize = false;
 
     static QString sanitizeString(QString str);
     static QByteArray join(const QList<QByteArray> &list, const QByteArray &sep);
@@ -40,20 +41,32 @@ namespace QtJson {
     static int nextToken(const QString &json, int &index);
 
     template<typename T>
-    QByteArray serializeMap(const T &map, bool &success) {
-        QByteArray str = "{";
+    QByteArray serializeMap(const T &map, bool &success, int _level = 0) {
+        QByteArray newline;
+        QByteArray tabs;
+        QByteArray tabsFields;
+        if (prettySerialize && !map.isEmpty()) {
+            newline = "\n";
+            for (uint l=1; l<_level; l++) {
+                tabs += "    ";
+            }
+            tabsFields = tabs + "    ";
+        }
+
+        QByteArray str = "{" + newline;
         QList<QByteArray> pairs;
         for (typename T::const_iterator it = map.begin(), itend = map.end(); it != itend; ++it) {
-            QByteArray serializedValue = serialize(it.value());
+            bool otherSuccess = true;
+            QByteArray serializedValue = serialize(it.value(), otherSuccess, _level);
             if (serializedValue.isNull()) {
                 success = false;
                 break;
             }
-            pairs << sanitizeString(it.key()).toUtf8() + ":" + serializedValue;
+            pairs << tabsFields + sanitizeString(it.key()).toUtf8() + ":" + (prettySerialize ? " " : "") + serializedValue;
         }
 
-        str += join(pairs, ",");
-        str += "}";
+        str += join(pairs, "," + newline) + newline;
+        str += tabs + "}";
         return str;
     }
 
@@ -62,16 +75,16 @@ namespace QtJson {
 
     template<typename T>
     void cloneMap(QVariant &json, const T &map) {
-	for (typename T::const_iterator it = map.begin(), itend = map.end(); it != itend; ++it) {
-	    insert(json, it.key(), (*it));
-	}
+    for (typename T::const_iterator it = map.begin(), itend = map.end(); it != itend; ++it) {
+        insert(json, it.key(), (*it));
+    }
     }
 
     template<typename T>
     void cloneList(QVariant &json, const T &list) {
-	for (typename T::const_iterator it = list.begin(), itend = list.end(); it != itend; ++it) {
-	    append(json, (*it));
-	}
+    for (typename T::const_iterator it = list.begin(), itend = list.end(); it != itend; ++it) {
+        append(json, (*it));
+    }
     }
 
     /**
@@ -109,39 +122,39 @@ namespace QtJson {
      * clone
      */
     QVariant clone(const QVariant &data) {
-	QVariant v;
+    QVariant v;
 
-	if (data.type() == QVariant::Map) {
-	    cloneMap(v, data.toMap());
-	} else if (data.type() == QVariant::Hash) {
-	    cloneMap(v, data.toHash());
-	} else if (data.type() == QVariant::List) {
-	    cloneList(v, data.toList());
-	} else if (data.type() == QVariant::StringList) {
-	    cloneList(v, data.toStringList());
-	} else {
-	    v = QVariant(data);
-	}
+    if (data.type() == QVariant::Map) {
+        cloneMap(v, data.toMap());
+    } else if (data.type() == QVariant::Hash) {
+        cloneMap(v, data.toHash());
+    } else if (data.type() == QVariant::List) {
+        cloneList(v, data.toList());
+    } else if (data.type() == QVariant::StringList) {
+        cloneList(v, data.toStringList());
+    } else {
+        v = QVariant(data);
+    }
 
-	return v;
+    return v;
     }
 
     /**
      * insert value (map case)
      */
     void insert(QVariant &v, const QString &key, const QVariant &value) {
-	if (!v.canConvert<QVariantMap>()) v = QVariantMap();
-	QVariantMap *p = (QVariantMap *)v.data();
-	p->insert(key, clone(value));
+    if (!v.canConvert<QVariantMap>()) v = QVariantMap();
+    QVariantMap *p = (QVariantMap *)v.data();
+    p->insert(key, clone(value));
     }
 
     /**
      * append value (list case)
      */
     void append(QVariant &v, const QVariant &value) {
-	if (!v.canConvert<QVariantList>()) v = QVariantList();
-	QVariantList *p = (QVariantList *)v.data();
-	p->append(value);
+    if (!v.canConvert<QVariantList>()) v = QVariantList();
+    QVariantList *p = (QVariantList *)v.data();
+    p->append(value);
     }
 
     QByteArray serialize(const QVariant &data) {
@@ -149,7 +162,18 @@ namespace QtJson {
         return serialize(data, success);
     }
 
-    QByteArray serialize(const QVariant &data, bool &success) {
+    QByteArray serialize(const QVariant &data, bool &success, int _level /*= 0*/) {
+        QByteArray newline;
+        QByteArray tabs;
+        QByteArray tabsFields;
+        if (prettySerialize) {
+            newline = "\n";
+            for (uint l=0; l<_level; l++) {
+                tabs += "    ";
+            }
+            tabsFields = tabs + "    ";
+        }
+
         QByteArray str;
         success = true;
 
@@ -160,19 +184,24 @@ namespace QtJson {
             QList<QByteArray> values;
             const QVariantList list = data.toList();
             Q_FOREACH(const QVariant& v, list) {
-                QByteArray serializedValue = serialize(v);
+                bool otherSuccess = true;
+                QByteArray serializedValue = serialize(v, otherSuccess, _level+1);
                 if (serializedValue.isNull()) {
                     success = false;
                     break;
                 }
-                values << serializedValue;
+                values << tabsFields + serializedValue;
             }
 
-            str = "[" + join( values, "," ) + "]";
+            if (!values.isEmpty()) {
+                str = "[" + newline + join( values, "," + newline ) + newline + tabs + "]";
+            } else {
+                str = "[]";
+            }
         } else if (data.type() == QVariant::Hash) { // variant is a hash?
-            str = serializeMap<>(data.toHash(), success);
+            str = serializeMap<>(data.toHash(), success, _level+1);
         } else if (data.type() == QVariant::Map) { // variant is a map?
-            str = serializeMap<>(data.toMap(), success);
+            str = serializeMap<>(data.toMap(), success, _level+1);
         } else if ((data.type() == QVariant::String) ||
                    (data.type() == QVariant::ByteArray)) {// a string or a byte array?
             str = sanitizeString(data.toString()).toUtf8();
@@ -600,4 +629,105 @@ namespace QtJson {
         return dateFormat;
     }
 
+    void setPrettySerialize(bool enabled) {
+        prettySerialize = enabled;
+    }
+
+    bool isPrettySerialize() {
+        return prettySerialize;
+    }
+
+
+
+    QQueue<BuilderJsonObject *> BuilderJsonObject::created_list;
+
+    BuilderJsonObject::BuilderJsonObject() {
+        // clean objects previous "created"
+        while (!BuilderJsonObject::created_list.isEmpty()) {
+            delete BuilderJsonObject::created_list.dequeue();
+        }
+    }
+
+    BuilderJsonObject::BuilderJsonObject(JsonObject &json) {
+        BuilderJsonObject();
+
+        obj = json;
+    }
+
+    BuilderJsonObject *BuilderJsonObject::set(const QString &key, const QVariant &value) {
+        obj[key] = value;
+
+        return this;
+    }
+
+    BuilderJsonObject *BuilderJsonObject::set(const QString &key, BuilderJsonObject *builder) {
+        return set(key, builder->create());
+    }
+
+    BuilderJsonObject *BuilderJsonObject::set(const QString &key, BuilderJsonArray *builder) {
+        return set(key, builder->create());
+    }
+
+    JsonObject BuilderJsonObject::create() {
+        BuilderJsonObject::created_list.enqueue(this);
+
+        return obj;
+    }
+
+
+    QQueue<BuilderJsonArray *> BuilderJsonArray::created_list;
+
+    BuilderJsonArray::BuilderJsonArray() {
+        // clean objects previous "created"
+        while (!BuilderJsonArray::created_list.isEmpty()) {
+            delete BuilderJsonArray::created_list.dequeue();
+        }
+    }
+
+    BuilderJsonArray::BuilderJsonArray(JsonArray &json) {
+        BuilderJsonArray();
+
+        array = json;
+    }
+
+    BuilderJsonArray *BuilderJsonArray::add(const QVariant &element) {
+        array.append(element);
+
+        return this;
+    }
+
+    BuilderJsonArray *BuilderJsonArray::add(BuilderJsonObject *builder) {
+        return add(builder->create());
+    }
+
+    BuilderJsonArray *BuilderJsonArray::add(BuilderJsonArray *builder) {
+        return add(builder->create());
+    }
+
+    JsonArray BuilderJsonArray::create() {
+        BuilderJsonArray::created_list.enqueue(this);
+
+        return array;
+    }
+
+
+
+
+    BuilderJsonObject *objectBuilder() {
+        return new BuilderJsonObject();
+    }
+
+    BuilderJsonObject *objectBuilder(JsonObject &json) {
+        return new BuilderJsonObject(json);
+    }
+
+    BuilderJsonArray *arrayBuilder() {
+        return new BuilderJsonArray();
+    }
+
+    BuilderJsonArray *arrayBuilder(JsonArray &json) {
+        return new BuilderJsonArray(json);
+    }
+
 } //end namespace
+
