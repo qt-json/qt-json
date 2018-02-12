@@ -156,7 +156,7 @@ If you continue this process recursively, you nest more levels into the JSON str
 
 #### Using Builders ####
 
-For semplicity you can use **builders**, if you prefer.
+For simplicity you can use **builders**, if you prefer.
 
 For example, create a `JsonObject`:
 
