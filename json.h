@@ -25,6 +25,7 @@
 
 #include <QVariant>
 #include <QString>
+#include <QQueue>
 
 
 /**
@@ -93,7 +94,7 @@ namespace QtJson {
      *
      * \return QByteArray Textual JSON representation in UTF-8
      */
-    QByteArray serialize(const QVariant &data, bool &success);
+    QByteArray serialize(const QVariant &data, bool &success, int _level = 0);
 
     /**
      * This method generates a textual JSON representation
@@ -112,7 +113,7 @@ namespace QtJson {
      *
      * \return QString Textual JSON representation
      */
-    QString serializeStr(const QVariant &data, bool &success);
+    QString serializeStr(const QVariant &data, bool &success, int _level = 0);
 
     /**
      * This method sets date(time) format to be used for QDateTime::toString
@@ -129,6 +130,21 @@ namespace QtJson {
      */
     QString getDateTimeFormat();
     QString getDateFormat();
+
+    /**
+     * @brief setPrettySerialize enable/disabled pretty-print when serialize() a json
+     * @param enabled
+     */
+    void setPrettySerialize(bool enabled);
+
+    /**
+     * @brief isPrettySerialize check if is enabled pretty-print when serialize() a json
+     * @return
+     */
+    bool isPrettySerialize();
+
+
+
 
     /**
      * QVariant based Json object
@@ -176,6 +192,74 @@ namespace QtJson {
                 removeKey<QVariantHash>(this, key);
         }
     };
+
+
+    class BuilderJsonArray;
+
+    /**
+     * @brief The BuilderJsonObject class
+     */
+    class BuilderJsonObject {
+
+        public:
+            BuilderJsonObject();
+            BuilderJsonObject(JsonObject &json);
+
+            BuilderJsonObject *set(const QString &key, const QVariant &value);
+            BuilderJsonObject *set(const QString &key, BuilderJsonObject *builder);
+            BuilderJsonObject *set(const QString &key, BuilderJsonArray *builder);
+            JsonObject create();
+
+        private:
+            static QQueue<BuilderJsonObject *> created_list;
+
+            JsonObject obj;
+    };
+
+    /**
+     * @brief The BuilderJsonArray class
+     */
+    class BuilderJsonArray {
+
+        public:
+            BuilderJsonArray();
+            BuilderJsonArray(JsonArray &json);
+
+            BuilderJsonArray *add(const QVariant &element);
+            BuilderJsonArray *add(BuilderJsonObject *builder);
+            BuilderJsonArray *add(BuilderJsonArray *builder);
+            JsonArray create();
+
+        private:
+            static QQueue<BuilderJsonArray *> created_list;
+
+            JsonArray array;
+    };
+
+
+    /**
+     * @brief Create a BuilderJsonObject
+     * @return
+     */
+    BuilderJsonObject *objectBuilder();
+
+    /**
+     * @brief Create a BuilderJsonObject starting from copy of another json
+     * @return
+     */
+    BuilderJsonObject *objectBuilder(JsonObject &json);
+
+    /**
+     * @brief Create a BuilderJsonArray
+     * @return
+     */
+    BuilderJsonArray *arrayBuilder();
+
+    /**
+     * @brief Create a BuilderJsonArray starting from copy of another json
+     * @return
+     */
+    BuilderJsonArray *arrayBuilder(JsonArray &json);
 }
 
 #endif //JSON_H

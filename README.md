@@ -84,6 +84,30 @@ The byte array 'data' contains valid JSON data:
 }
 ```
 
+#### Serializing JSON pretty-print ####
+By default, the serialization will create a _minified_ version, like following:
+
+```json
+{"name":"Luis Gustavo","age":22}
+```
+
+If you are debugging or logging, you may prefer to enable **pretty-print** mode globally, before serialize:
+
+```cpp
+QtJson::setPrettySerialize(true);
+
+QByteArray data = QtJson::serialize(contributor);
+// ...
+QByteArray data = QtJson::serialize(other_contributor);
+```
+
+Obviously, you can disable it with:
+```cpp
+QtJson::setPrettySerialize(false);
+```
+
+---
+
 After creating the QVariantMap, you can create a [QVariantList/JsonArray][varlist] and append the QVariantMaps. 
 
 ```cpp    
@@ -128,6 +152,58 @@ This way you create a nested structure:
 ```
 
 If you continue this process recursively, you nest more levels into the JSON structure.
+
+
+#### Using Builders ####
+
+For simplicity you can use **builders**, if you prefer.
+
+For example, create a `JsonObject`:
+
+```cpp
+QtJson::JsonObject json = QtJson::objectBuilder()
+    ->set("field_1", 10)
+    ->set("field_2", "A string")
+    ->set("field_3", true)
+    ->set("field_4", QtJson::objectBuilder()
+        ->set("sub_field_1", 10.4)
+        ->set("sub_field_n", "Another string")
+    )
+    ->create();
+```
+
+Or create a `JsonArray`:
+
+```cpp
+QtJson::JsonArray json = QtJson::arrayBuilder()
+    ->add(5)
+    ->add(90.2)
+    ->add(true)
+    ->add("anything else")
+    ->create();
+```
+
+Take a look at this example that rewrite the previous one:
+
+```cpp
+QtJson::JsonObject obj = QtJson::objectBuilder()
+    ->set("friends", QtJson::arrayBuilder()
+        ->add(QtJson::objectBuilder()
+            ->set("id", 1)
+            ->set("name", "Mackenzie Hamphrey")
+        )
+        ->add(QtJson::objectBuilder()
+            ->set("id", 2)
+            ->set("name", "Melanie Molligan")
+        )
+        ->add(QtJson::objectBuilder()
+            ->set("id", 3)
+            ->set("name", "Sydney Calhoun")
+        )
+    )
+    ->create();
+```
+
 
 ### 3. CONTRIBUTING ###
 
